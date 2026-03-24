@@ -14,10 +14,12 @@
  for original (PAL) disk images.
 
 REQUIREMENTS:
-- Slave requires WHDLoad V17+ and RawDIC
+- Slave requires WHDLoad V19+ and RawDIC
 - Game requires 512Kb chip mem (+2.9Mb other memory for preload option)
 
 - fixed newicon slave name (issue #0005523)
+
+TODO: fix graphic glitches on joypad controls: cycle exact level 2 when balls fall, try to jump
 
 Version 2.1 (27.02.2022) done by JOTD 
 - fixed graphic glitches (joypad controls) and 3-button joystick support (issue #0005420)

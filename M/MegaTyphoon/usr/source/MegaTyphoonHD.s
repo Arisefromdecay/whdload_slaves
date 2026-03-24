@@ -70,7 +70,7 @@ IGNORE_JOY_DIRECTIONS
 	ENDC
 
 DECL_VERSION:MACRO
-	dc.b	"1.4"
+	dc.b	"1.5"
 	IFD BARFLY
 		dc.b	" "
 		INCBIN	"T:date"
@@ -109,7 +109,7 @@ _args_end
 
 ; version xx.slave works
 
-	dc.b	"$VER: slave "
+	dc.b	"$","VER: slave "
 	DECL_VERSION
 	dc.b	0
 
@@ -217,6 +217,9 @@ pl_main
 
 	PL_P	$8F1A,emulate_dbf
 
+	; force read joy in the "continue" loop
+	PL_PS	$147be,read_joypad_in_continue
+	
     ; vbl hook to read joypad
     PL_PS   $045a6,vbl_hook
     PL_PS   $04878,vbl_hook
@@ -226,6 +229,19 @@ pl_main
     ;;PL_PSS    $04580,read_fire,$10,4
 	PL_END
 
+read_joypad_in_continue:
+	LEA	_custom,A5
+	movem.l	a0/d0,-(a7)
+	* in this loop (continue screen), no interrupts are active
+	* so joystick isn't read
+	moveq	#1,d0
+	bsr _read_joystick
+	lea		joy1(pc),a0
+	move.l	d0,(a0)
+	movem.l	(a7)+,a0/d0
+	rts
+	
+	
 read_buttons
     move.l  joy1(pc),d1
     btst    #JPB_BTN_RED,d1

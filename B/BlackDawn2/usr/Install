@@ -95,8 +95,8 @@
 	  (choices
 		"Original release (RawDIC)"
 		"Alternate version (Patcher)"
-		"Budget re-release (DIC)"
-		"Hit-Squad version (Files)"
+		"1-disk shareware version"
+		"2-disk version"
 		"CD/CDTV/CD³² version (Files)"
 		"Defjam compact (Single File)"
 	  )
@@ -188,7 +188,19 @@
     (				;----- 3 = DOS (Files) -----
 
       ;if the disk can be requested by the volume name:
-      (set #AD_disk "DAWNII")
+       (until
+         (or (exists "DAWNII:DAWNII" (noreq)) (exists "BD2:DAWNII" (noreq)))
+         (message
+           ("\nInsert %s disk in any drive!\n" @app-name)
+           (all)
+         )
+       )
+       (if (exists "DAWNII:DAWNII" (noreq))
+       (set #AD_disk ("DAWNII" #diskno))
+       (set #AD_disk ("BD2" #diskno))
+       )
+	  
+
       (set #AD_diskname "Disk 1")	;this optional, default is #AD_disk
       (P_AskDisk)
       (copyfiles

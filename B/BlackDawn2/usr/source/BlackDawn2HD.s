@@ -73,7 +73,7 @@ slv_keyexit	= $5D	; num '*'
 	ENDC
 
 DECL_VERSION:MACRO
-	dc.b	"1.1"
+	dc.b	"1.2"
 	IFD BARFLY
 		dc.b	" "
 		INCBIN	"T:date"
@@ -172,6 +172,9 @@ patch_main
 	bsr	get_version
     cmp.l   #2,d0
     beq.b   .original
+	lea	pl_main_sw(pc),a0
+	cmp.l	#3,d0
+	beq.b	.original
 	lea	pl_boot(pc),a0
 .original    
     IFD    CHIP_ONLY
@@ -198,6 +201,55 @@ pl_boot
 JFF_LABEL = $4A46463A       ; "JFF:"
 
 ; apply on SEGMENTS
+pl_main_sw
+    PL_START
+    ; apply ross fix: string on even address
+    PL_B    $7f4+3,$4a
+    ; shift string
+    PL_L    $B40,"Icon"
+    PL_L    $B44,"s   "
+
+
+    
+    ; all this shite just to be able to save to hard drive
+
+    ; first df0/df1 hardcoded assigns
+    PL_L    $254ac,JFF_LABEL
+    PL_L    $254b2,JFF_LABEL
+    PL_L    $25502,JFF_LABEL
+    PL_L    $25512,JFF_LABEL
+    PL_L    $25518,JFF_LABEL
+    PL_L    $2551e,JFF_LABEL
+    PL_L    $25524,JFF_LABEL
+    PL_L    $25534,JFF_LABEL
+    PL_L    $2553a,JFF_LABEL
+    PL_L    $25540,JFF_LABEL
+
+    ; then direct access to drives 0 and 1 using CIAs
+    
+    PL_NOP  $228ac,4    ; no write to cia (select drive 0)
+    PL_DATA $228ba,4
+    moveq.l #-1,d3
+    nop                 ; not write protected
+
+    PL_NOP  $2290a,4
+    PL_DATA $22918,4
+    moveq.l #-1,d3
+    nop                 ; not write protected
+
+    
+    PL_NOP  $22ed2,4    ; no write to cia (select drive 0)
+    PL_DATA $22ee0,4
+    moveq.l #-1,d3
+    nop                 ; disk change bit
+    
+    PL_NOP  $22f7a,4    ; no write to cia (select drive 0)
+    PL_DATA $22f88,4
+    moveq.l #-1,d3
+    nop                 ; disk change bit
+    
+    PL_END
+	
 pl_main
     PL_START
     ; apply ross fix: string on even address
@@ -205,8 +257,7 @@ pl_main
     ; shift string
     PL_L    $B40,"Icon"
     PL_L    $B44,"s   "
-;    PL_DATA $b40,8
-;	DC.b	"Icons   "
+
 
     
     ; all this shite just to be able to save to hard drive
@@ -316,6 +367,9 @@ get_version:
 
     cmp.l   #232476,d0
     beq.b   .original
+	
+    cmp.l   #233452,d0
+    beq.b   .shareware
     
 	pea	TDREASON_WRONGVER
 	move.l	_resload(pc),-(a7)
@@ -327,6 +381,9 @@ get_version:
     bra.b   .out
 .original
 	moveq	#2,d0
+    bra.b   .out
+.shareware
+	moveq	#3,d0
     bra.b   .out
     nop
 

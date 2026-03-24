@@ -40,7 +40,7 @@ FASTMEMSIZE	= $0000
 	ELSE
 ;;BLACKSCREEN
 CHIPMEMSIZE	= $200000
-FASTMEMSIZE	= $400000
+FASTMEMSIZE	= $3000000
 	ENDC
 
 NUMDRIVES	= 1
@@ -74,7 +74,7 @@ slv_keyexit	= $5D	; num '*'
 	ENDC
 
 DECL_VERSION:MACRO
-	dc.b	"1.2"
+	dc.b	"1.0"
 	IFD BARFLY
 		dc.b	" "
 		INCBIN	"T:date"
@@ -90,12 +90,12 @@ DECL_VERSION:MACRO
 
 
 
-slv_name		dc.b	"Renegade (AGA)"
+slv_name		dc.b	"Mortal Kombat 3 (AGA)"
 	IFD	CHIP_ONLY
 	dc.b	" (DEBUG/CHIP MODE)"
 	ENDC
 			dc.b	0
-slv_copy		dc.b	"2025-2026 Dave Douglas",0
+slv_copy		dc.b	"2026 Arti",0
 slv_info		dc.b	"adapted by JOTD",10,10
 		dc.b	"Version "
 		DECL_VERSION
@@ -103,9 +103,14 @@ slv_info		dc.b	"adapted by JOTD",10,10
 slv_CurrentDir:
 	dc.b	"data",0
 
-
-program:
-	dc.b	"renegade",0
+env_dir:
+	dc.b	"env",0
+ram_dir:
+	dc.b	"ram:",0
+program_060:
+	dc.b	"mk3-060",0
+program_040:
+	dc.b	"mk3-040",0
 args		dc.b	10
 args_end
 	dc.b	0
@@ -144,6 +149,15 @@ _bootdos
 		jsr	(_LVOOldOpenLibrary,a6)
 		move.l	d0,a6			;A6 = dosbase
         
+		lea 	lowlevelname(pc),a0
+		bsr		must_exist
+		lea 	localename(pc),a0
+		bsr		must_exist
+		
+		lea	env_dir(pc),a0
+		lea		ram_dir(pc),a1
+		bsr	_dos_assign
+		
         IFD CHIP_ONLY
         movem.l a6,-(a7)
 		move.l	$4.w,a6
@@ -155,23 +169,54 @@ _bootdos
 
     ; store exe file size once and for all
 
-		lea	program(pc),a0
+		lea	program_040(pc),a0
+		move.l	attnflags(pc),d0
+		btst	#AFB_68060,d0
+		beq		.1
+		lea	program_060(pc),a0
+		
+.1:
+		move.l	a0,-(a7)
 		jsr		resload_GetFileSize(a2)
 		lea	file_size(pc),a0
 		move.l	d0,(a0)
-		lea	program(pc),a0
+		move.l	(a7)+,a0
 
 	;load exe
 		lea	args(pc),a1
 		moveq	#args_end-args,d0
 		lea	patch_main(pc),a5
+		sub.l	a5,a5
 		bsr	load_exe
 	;quit
 _quit		pea	TDREASON_OK
 		move.l	(_resload,pc),a2
 		jmp	(resload_Abort,a2)
 
+; < A0 filename
+; < A6 dosbase
 
+must_exist:
+	movem.l	d0-d1/a0-a1/a3,-(a7)
+	move.l	a0,d1
+	move.l	a0,a3
+	move.l	#ACCESS_READ,d2
+	jsr	_LVOLock(a6)
+	move.l	d0,d1
+	beq.b	.error
+	jsr	_LVOUnLock(a6)
+	movem.l	(a7)+,d0-d1/a0-a1/a3
+	rts
+
+.error
+	jsr	(_LVOIoErr,a6)
+	move.l	a3,-(a7)
+	move.l	d0,-(a7)
+	pea	TDREASON_DOSREAD
+	move.l	(_resload,pc),-(a7)
+	add.l	#resload_Abort,(a7)
+	rts
+	
 patch_main:
 	bsr		get_version
 	add.w	d0,d0
@@ -188,7 +233,6 @@ patch_main:
 
 pl_table:
 	dc.w	pl_version14-pl_table
-	dc.w	pl_version15-pl_table
 	dc.w	pl_version15-pl_table
 	
 
@@ -216,8 +260,6 @@ get_version:
 	beq.b	.version1
 	cmp.l	#4565532,d0
 	beq.b	.version2
-	cmp.l	#4565552,d0
-	beq.b	.version3
 	
     
 	pea	TDREASON_WRONGVER
@@ -230,9 +272,6 @@ get_version:
 	bra.b	.out
 .version2
 	moveq	#1,d0
-	bra.b	.out
-.version3
-	moveq	#2,d0
 	bra.b	.out
 	nop
 
@@ -335,7 +374,10 @@ segments:
 		dc.l	0
 prev_joy1   dc.l    0
 
-    
+lowlevelname:
+	dc.b	"libs/lowlevel.library",0
+localename:
+	dc.b	"libs/locale.library",0
 ;============================================================================
 
 	END
