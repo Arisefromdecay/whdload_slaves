@@ -48,7 +48,7 @@ NUMDRIVES	= 1
 WPDRIVES	= %0000
 
 ;DISKSONBOOT
-DOSASSIGN
+;DOSASSIGN
 ;INITAGA
 HDINIT
 IOCACHE		= 10000
@@ -73,7 +73,7 @@ slv_keyexit	= $5D	; num '*'
 	ENDC
 
 DECL_VERSION:MACRO
-	dc.b	"1.0"
+	dc.b	"1.1"
 	IFD BARFLY
 		dc.b	" "
 		INCBIN	"T:date"
@@ -109,8 +109,6 @@ args		dc.b	10
 args_end
 	dc.b	0
 slv_config
-	dc.b    "C1:X:Trainer Infinite energy:0;"
-	dc.b	"C5:B:disable speed regulation;"
 	dc.b	0	
 
 ; version xx.slave works
@@ -185,8 +183,10 @@ patch_main
 pl_main
     PL_START
 	PL_B	$010d4,$60
-	PL_NOP	$010e4,$6			; don't call supervisor to read VBR
-	PL_W	$010ea,$7000		; vbr at zero
+	PL_NOP	$010e4,$4			; don't call supervisor to read VBR
+	PL_W	$010e8,$7000		; vbr at zero
+	PL_R	$17f1c				; remove winuae detection
+	PL_S	$17758,$1776a-$17758 ; remove winuae detection
     PL_END
     
 get_version:
