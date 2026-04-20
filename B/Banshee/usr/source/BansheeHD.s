@@ -4,6 +4,7 @@
 ;  :Author.	JOTD, from Wepl sources
 ;  :Original	v1 
 ;  :Version.	$Id: BansheeHD.asm 1.2 2002/02/08 01:18:39 wepl Exp wepl $
+;				05.04.2026	Trainer added
 ;  :History.	%DATE% started
 ;  :Requires.	-
 ;  :Copyright.	Public Domain
@@ -12,13 +13,13 @@
 ;  :To Do.
 ;---------------------------------------------------------------------------*
 
-	INCDIR	Include:
+	INCDIR	Includes:
 	INCLUDE	whdload.i
 	INCLUDE	whdmacros.i
 	INCLUDE	lvo/dos.i
 
 	IFD BARFLY
-	OUTPUT	"Banshee.slave"
+	OUTPUT	"HD2:util/dev/whdload/banshee/Banshee.slave"
 	BOPT	O+				;enable optimizing
 	BOPT	OG+				;enable optimizing
 	BOPT	ODd-				;disable mul optimizing
@@ -29,7 +30,7 @@
 	ENDC
 
 SEGTRACKER
-CHIP_ONLY
+;CHIP_ONLY
 ;============================================================================
 
 CHIPMEMSIZE	= $1FF000
@@ -42,10 +43,10 @@ FASTMEMSIZE = $80000
 NUMDRIVES	= 1
 WPDRIVES	= %0000
 
-;BLACKSCREEN
+BLACKSCREEN
 ;DISKSONBOOT
 DOSASSIGN
-DEBUG
+;DEBUG
 INITAGA
 HDINIT
 ;HRTMON
@@ -87,13 +88,13 @@ _assign_5
 	
 	IFD BARFLY
 	IFND	.passchk
-	DOSCMD	"WDate  >T:date"
+;	 DOSCMD	 "WDate  >T:date"
 .passchk
 	ENDC
 	ENDC
 
 DECL_VERSION:MACRO
-	dc.b	"4.0"
+	dc.b	"3.4"
 	IFD BARFLY
 		dc.b	" "
 		INCBIN	"T:date"
@@ -115,20 +116,23 @@ slv_name		dc.b	"Banshee AGA/CD³²"
 slv_copy		dc.b	"1992 Core Design",0
 slv_info		dc.b	"adapted & fixed by JOTD",10
 			dc.b	"Thanks to BTTR for disk images",10,10
+			dc.b	"Trainer and ctro added by Arise from Decay",10,10
 			dc.b	"Version "
 			DECL_VERSION
 			dc.b	0
 slv_CurrentDir:
 	dc.b	"data",0
 slv_config:
-;		dc.b    "C1:L:Start with lives:5,25,45;"			
-;		dc.b    "C2:B:Infinite power weapons;"			
-;		dc.b    "C3:B:Don't steal power weapons at level 89;"			
-;        dc.b    "C4:X:Trainer Infinite Lives & Ammo:0;"
+		dc.b	"C1:B:Unlimited Energy;"
+        dc.b    "C2:B:Unlimited Lives;"
+		dc.b    "C3:B:Unlimited Loops;"
+		dc.b	"C4:B:Show Cracktro;"
 		dc.b	0
-
+_cracktro
+	dc.b	"BaNaNa",0
 _intro:
 	dc.b	"picture.exe",0
+
 _program:
 	dc.b	"bans.exe",0
 _args		dc.b	10
@@ -174,8 +178,22 @@ _bootdos
 		lea	_assign_5(pc),a0
 		sub.l	a1,a1
 		bsr	_dos_assign
+    ;load cracktro
+		clr.l	-(a7)
+		clr.l	-(a7)
+		pea	WHDLTAG_CUSTOM4_GET
+		move.l	a7,a0
+		jsr	(resload_Control,a2)
+		tst.l	(4,a7)
+		beq	.noctro
 
-	;load intro
+		lea _cracktro(pc),a0
+		lea _args(pc),a1
+		moveq	#_args_end-_args,d0
+		sub.l	a5,a5
+		bsr _load_exe
+.noctro
+ 	;load intro
 		lea	_intro(pc),a0
 		lea	_args(pc),a1
 		moveq	#_args_end-_args,d0
@@ -218,16 +236,27 @@ pl_floppy:
 	; fix access faults
 	PL_PS	$0111a6,_move_a4_d0
 	PL_PS	$011d1e,_move_a4_d3
-	
-    PL_PS	$011ce0,_move_a4_d6
-    PL_PS	$0172d0,_move_a4_d6
-    PL_PS	$0172fc,_move_a4_d6
-    PL_PS	$01735c,_move_a4_d6
-    PL_PS	$01828c,_move_a4_d6	
+	PL_PS	$011ce0,_move_a4_d6
+	PL_PS	$0172d0,_move_a4_d6
+	PL_PS	$0172fc,_move_a4_d6
+	PL_PS	$01735c,_move_a4_d6
+	PL_PS	$01828c,_move_a4_d6
 	PL_PS	$00857a,move_potgo_d2
 	PL_PS	$07299e,_emu_copylock
 	PL_L	$07299e+6,$600008AC		; skip to copylock end
-	
+	PL_IFC2
+	PL_NOPS $104ac,2		;lives
+	PL_ENDIF
+	PL_IFC3
+	PL_NOPS $d78c,2			;loops
+	PL_ENDIF
+	PL_IFC1
+	PL_NOPS	$1088a,2
+	PL_NOPS $10898,2		;energy
+	PL_NOPS	$108a6,2
+	PL_NOPS	$108b8,2
+	PL_NOPS	$108c0,2
+	PL_ENDIF
 	PL_END
 	
 ; < d7: seglist
