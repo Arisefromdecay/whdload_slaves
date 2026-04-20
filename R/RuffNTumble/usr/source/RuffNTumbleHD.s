@@ -3,6 +3,7 @@
 ;  :Contents.	Slave for "RuffNTumble" from
 ;  :Author.	JOTD
 ;  :History.	28.01.05
+;				15.04.2026 Trainer added by Arise from decay
 ;  :Requires.	-
 ;  :Copyright.	Public Domain
 ;  :Language.	68000 Assembler
@@ -10,12 +11,12 @@
 ;  :To Do.
 ;---------------------------------------------------------------------------*
 
-	INCDIR	Include:
+	INCDIR	Includes:
 	INCLUDE	whdload.i
 	INCLUDE	whdmacros.i
 
 	IFD BARFLY
-	OUTPUT	RuffNTumble.slave
+	OUTPUT	"HD2:util/dev/WHDload/ruffntumble/RuffNTumble.slave"
 	BOPT	O+				;enable optimizing
 	BOPT	OG+				;enable optimizing
 	BOPT	ODd-				;disable mul optimizing
@@ -69,6 +70,9 @@ _expmem
 _config
         dc.b    "BW;"
         dc.b    "C2:B:use 2nd/blue button for jump;"
+		dc.b	"C3:X:Trainer lives:0;"
+		dc.b	"C3:X:Trainer health:1;"
+		dc.b	"C3:X:Trainer ammo:2;"
 		dc.b	0
 		even
 		
@@ -93,7 +97,7 @@ DECL_VERSION:MACRO
 
 _name		dc.b	"Ruff'N'Tumble"
 		dc.b	0
-_copy		dc.b	"1994 Wonderkind/Renegade",0
+_copy		dc.b	"1994 Wunderkind/Renegade",0
 _info		dc.b	"adapted & fixed by JOTD",10,10
 		dc.b	"CD32 controls by Earok:",10,10
 		dc.b	"Menu: bwd enable options",10
@@ -102,9 +106,10 @@ _info		dc.b	"adapted & fixed by JOTD",10,10
 		dc.b	"Game: bwd+fwd quits game",10
 		dc.b	"      bwd replays",10
 		dc.b	"      play pauses",10,10
-		
 		dc.b	"Version "
 		DECL_VERSION
+		dc.b	10
+		dc.b	"Trainer added by Arise from Decay",10
 		dc.b	0
 
 ; version xx.slave works
@@ -220,6 +225,7 @@ patch_loader_1
 
 pl_loader
 	PL_START
+	PL_NOPS	$E000,4
     PL_PS   $A8E,read_fire
     PL_S    $A8E+6,$AB2-$A8E-6  ; skip useless/potentially harmful cia code
 	PL_IFC2
@@ -233,6 +239,21 @@ pl_loader
 	PL_PS	$96E,kback
 	PL_W	$974,$6018
 	PL_B	$8DF,$1F	; fix BTST.B $DFF01E!!
+	PL_IFC3X 0
+	PL_B	$50,$ff		;Custom 3X0 Lives
+	PL_ELSE
+	PL_B	$50,$00
+	PL_ENDIF
+	PL_IFC3X 1
+	PL_B	$52,$ff     ;Custom 3X1	Ammo
+	PL_ELSE
+	PL_B	$52,$00
+	PL_ENDIF
+	PL_IFC3X 2
+	PL_B	$54,$ff    	;Custom 3X2	Health
+	PL_ELSE
+	PL_B	$53,$00
+	PL_ENDIF
 	PL_PS	$906,inside_vbi
 	PL_P	$14F0,decrunch_and_patch
 
@@ -300,13 +321,14 @@ TEST_BUTTON:MACRO
 	ST.B	\2  ;Reset		
 .\1_\3_out
 	ENDM
-	
+
 inside_vbi:
 	addq.l	#1,$399E.W	; original code
  ;   btst    #0,$399E.W
  ;   beq.b   .ok
  ;   rts
 ;.ok
+	bsr	.trainer
 	movem.l	D0-D1/A0,-(A7)
 	moveq	#1,d0
 	bsr	_read_joystick
@@ -345,6 +367,23 @@ inside_vbi:
 	beq .noreset
 	Move.l #$30303030,CODE_LOCATION	;no code
 
+	;Trainer added by Arise from decay
+.trainer
+	tst.b	$50
+	beq .nolives
+	move.b	#6,$3e6e
+.nolives
+	tst.b	$52
+	beq	.nohealth
+	move.b	#5,$3e51
+	move.b	#5,$3e53
+.nohealth
+	tst.b	$54
+	beq	.noammo
+	move.l	#$02f002f0,$3e32
+	;move.w	 $2f0,$3e34
+.noammo rts
+
 .noreset
 
 	btst #JPB_BTN_BLU,d0
@@ -380,7 +419,7 @@ inside_vbi:
 	beq.b	.nojoypad
 	TEST_BUTTON	JPB_BTN_FORWARD,$3CC9,game
 .nojoypad:
-.NoReplay	
+.NoReplay
 	btst #JPB_BTN_BLU,d0
 	beq .NoJump
 	move.w	#1,(a0)
@@ -634,6 +673,7 @@ decrunch_and_patch:
 	BRA.S	.lab_0017		;16A8: 60DE
 .lab_001B:
 	RTS				;16AA: 4E75
+
 
 quit
 	pea	TDREASON_OK
