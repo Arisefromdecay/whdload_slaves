@@ -8,7 +8,7 @@
  CAUSED IN ANY USUAL, SPECIAL, OR ACCIDENTAL WAY, ALSO IF THE OWNER OR A THIRD
  PARTY HAS BEEN POINTED AT SUCH POSSIBILITIES OF DAMAGE.
 
- This install applies to "Superfrog" © 1993/1994 Team 17 - 3 disks/CD32.
+ This install applies to "Superfrog" Â© 1993/1994 Team 17 - 3 disks/CD32.
  
  This install requires WHDLoad to be in the path. It can be found in the
  WHDLoad package.
@@ -34,6 +34,14 @@ REQUIREMENTS:
 	http://www.whdload.de/
  or	aminet:dev/misc/whdload#?
  and	aminet:game/patch/
+
+version 1.7: (18.04.2026) done by Arise from Decay
+- added more ingame trainerkeys
+  F1 Toggle infinite lives, F2 Toggle infinite time, F3 toggle infinite energy
+  F4 Toggles bounce off enemies, F5 Toggles Invisibility (not infinite but for very long)
+  1,2 Decreases or increases speed, 3,4 Decreases or increases jumpheight
+  X opens levelexit
+- added optional crackintro by crystal for ocs version (copy crystal.RNC to install directory)
  
 version 1.6: (9-oct-2024) done by JOTD:
 - adapted to WHDLoad 19, now uses internal joypad read routine
@@ -75,7 +83,7 @@ version 1.0: (03-May-2001)
 - Load/Save high score menu options have been disabled (disk version)
 - Compatible with JST disk images (rename them to Disk.x)
 - Intro installed separately
-- All O/S code removed in CD³² version (no need for OSEmu!)
+- All O/S code removed in CDÂ³Â² version (no need for OSEmu!)
 - ATN! decruncher relocated to fast memory (x3)
 - Snoop bugs fixed (move.l #$ffffffff,$dff084)
 - Access faults in Project F fixed (x8)
