@@ -1,3 +1,4 @@
+
 ;*---------------------------------------------------------------------------
 ; Program:	Superfrog.s
 ; Contents:	Slave for "Superfrog" (c) 1993 Team 17
@@ -486,7 +487,7 @@ _Keybd
 	add.l	#$b000,a1
 	eor.l	#$53680058^$4e714e71,$4D4(a1)	; $9c4d4   ;Infinite lives (subq.w #1,($58,a0))
 	sub.l	#$1c000,a1
-	move.w	#$06F,color+_custom
+	;move.w	#$06F,color+_custom 
 	bsr	_SetCheat
 
 _Nof1		cmp.b	#$51,d0					;Check F2 key (Time)
