@@ -108,7 +108,7 @@ DECL_VERSION:MACRO
 	DECL_VERSION
 	dc.b	0
 
-slv_name		dc.b	"Banshee AGA/CD³²"
+slv_name		dc.b	"Banshee AGA/CDÂ³Â²"
 		IFD		CHIP_ONLY
 		dc.b	" (debug/chip mode)"
 		ENDC
@@ -116,7 +116,7 @@ slv_name		dc.b	"Banshee AGA/CD³²"
 slv_copy		dc.b	"1992 Core Design",0
 slv_info		dc.b	"adapted & fixed by JOTD",10
 			dc.b	"Thanks to BTTR for disk images",10,10
-			dc.b	"Trainer and ctro added by Arise from Decay",10,10
+			dc.b	"Trainer added by Arise from Decay",10,10
 			dc.b	"Version "
 			DECL_VERSION
 			dc.b	0
@@ -126,10 +126,7 @@ slv_config:
 		dc.b	"C1:B:Unlimited Energy;"
         dc.b    "C2:B:Unlimited Lives;"
 		dc.b    "C3:B:Unlimited Loops;"
-		dc.b	"C4:B:Show Cracktro;"
 		dc.b	0
-_cracktro
-	dc.b	"BaNaNa",0
 _intro:
 	dc.b	"picture.exe",0
 
@@ -151,7 +148,7 @@ _bootdos
 		lea	(_tag,pc),a0
 		jsr	(resload_Control,a2)
 
-	;for CD³² version
+	;for CDÂ³Â² version
 	
 		bsr	_patch_cd32_libs
 		bsr	_detect_controller_types
@@ -178,21 +175,7 @@ _bootdos
 		lea	_assign_5(pc),a0
 		sub.l	a1,a1
 		bsr	_dos_assign
-    ;load cracktro
-		clr.l	-(a7)
-		clr.l	-(a7)
-		pea	WHDLTAG_CUSTOM4_GET
-		move.l	a7,a0
-		jsr	(resload_Control,a2)
-		tst.l	(4,a7)
-		beq	.noctro
 
-		lea _cracktro(pc),a0
-		lea _args(pc),a1
-		moveq	#_args_end-_args,d0
-		sub.l	a5,a5
-		bsr _load_exe
-.noctro
  	;load intro
 		lea	_intro(pc),a0
 		lea	_args(pc),a1
@@ -283,7 +266,7 @@ _patch_exe:
 ;	cmp.l	#0,A0
 ;	beq.b	.sk5b
 ;
-;	; CD³² version: any key pauses the game
+;	; CDÂ³Â² version: any key pauses the game
 ;	; but quits immediately afterwards. This is stupid
 ;
 ;	move.w	#$6006,2(A0)
