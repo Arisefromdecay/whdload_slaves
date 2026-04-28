@@ -1,4 +1,3 @@
-
 ;*---------------------------------------------------------------------------
 ; Program:	Superfrog.s
 ; Contents:	Slave for "Superfrog" (c) 1993 Team 17
@@ -9,7 +8,7 @@
 ;		         - Load/Save high score menu options have been disabled (disk version)
 ;		         - Compatible with JST disk images (rename them to Disk.x)
 ;		         - Intro installed separately
-;		         - All O/S code removed in CD�� version (no need for OSEmu!)
+;		         - All O/S code removed in CD³² version (no need for OSEmu!)
 ;		         - ATN! decruncher relocated to fast memory (x3)
 ;		         - Snoop bugs fixed (move.l #$ffffffff,$dff084)
 ;		         - Access faults in Project F fixed (x8)
@@ -87,7 +86,6 @@ _expmem		dc.l	EXTMEMSIZE			;ws_ExpMem
 		
 _config
         dc.b    "C2:B:blue/second button jumps;"
-		dc.b	"C3:B:Show Crystal cracktro;"
 		dc.b	0
 
 	IFD BARFLY
@@ -131,7 +129,6 @@ _info		dc.b	"Installed by Codetapper/Action! & JOTD",10
 		dc.b	10,"Carlo Pirri and Xavier Bodenand for the CD versions!"
 		dc.b	0
 _Highs		dc.b	"Superfrog.highs",0
-_Cracktro	dc.b	"crystal.rnc",0
 _DiskNumber	dc.b	1
 _LastKeypress	dc.b	0
 _CheatFlag	dc.b	0
@@ -150,26 +147,6 @@ _restart	lea	_Tags(pc),a0
 		jsr	resload_Control(a2)
 		
 		bsr	_detect_controller_types
-
-;LoadCracktro	
-		clr.l	-(a7)
-		clr.l	-(a7)
-		pea	WHDLTAG_CUSTOM3_GET
-		move.l	a7,a0
-		jsr	(resload_Control,a2)
-		tst.l	(4,a7)
-		beq	_NotRegistered
-		lea	_Cracktro(pc),a0
-		lea $58000,a1
-		move.l	a1,a5
-		move.l	_resload(pc),a2
-		jsr resload_LoadFileDecrunch(a2)
-
-	    lea _pl_crystal,a0
-	    move.l  a5,a1
-	    jsr (resload_Patch,a2)
-
-		jsr	(a5)
 
 _NotRegistered	lea	_Track0(pc),a0
 		lea	$10000,a1
@@ -193,22 +170,6 @@ _PL_Boot	PL_START
 		PL_P	$6da,_DecrunchATN	;Decrunch ATN!
 		PL_END
 
-_pl_crystal
-	    PL_START
-		PL_PSS	$4b8e,_keyboardcrack,2
-	    PL_END
-
-_keyboardcrack
-	btst	#6,($bfe001)
-	beq		.mouse
-	movem.l	d0-d7/a0-a6,-(sp)
-	move.b  $bfec01,d0
-	ror.b	#1,d0
-	not.b	d0
-	cmp.b	_keyexit(pc),d0
-	beq	_exit
-	movem.l	(sp)+,d0-d7/a0-a6
-.mouse	  rts
 ;======================================================================
 
 _PatchTrack1	movem.l	d0-d1/a0-a2,-(sp)
@@ -311,7 +272,6 @@ _PL_Main	PL_START
         PL_PS	$011374,read_joy1dat_d0
         PL_PS	$011a42,read_joy1dat_d0 	; this one controls initial jump
 		PL_ENDIF
-		
 		PL_END
 
 
@@ -487,8 +447,11 @@ _Keybd
 	add.l	#$b000,a1
 	eor.l	#$53680058^$4e714e71,$4D4(a1)	; $9c4d4   ;Infinite lives (subq.w #1,($58,a0))
 	sub.l	#$1c000,a1
-	;move.w	#$06F,color+_custom 
 	bsr	_SetCheat
+	bsr _Flashscreen
+;	 lea _CheatFlag(pc),a0					 ;Set flag to say user is a cheat
+;	 move.b	 #-1,(a0)
+;	 bsr _FlushLibs
 
 _Nof1		cmp.b	#$51,d0					;Check F2 key (Time)
 	bne _Nof2
@@ -496,6 +459,10 @@ _Nof1		cmp.b	#$51,d0					;Check F2 key (Time)
 	eor.l	#$532800a3^$4e714e71,$d6a(a1)   ;Infinite time (subq.b #1,($a3,a0))              $5328 $00a3
 	sub.l	#$11000,a1
 	bsr	_SetCheat
+	bsr _Flashscreen
+;	 lea _CheatFlag(pc),a0					 ;Set flag to say user is a cheat
+;	 move.b	 #-1,(a0)
+;	 bsr _FlushLibs
 
 _Nof2		cmp.b	#$52,d0					;Check F3 key (Energy)
 	bne	_Nof3
@@ -503,13 +470,21 @@ _Nof2		cmp.b	#$52,d0					;Check F3 key (Energy)
 	eor.l   #$5368005a^$4e714e71,$60c(a1)	;Energy (subq.w #1,($5a,a0)
 	sub.l	#$1c000,a1
 	bsr	_SetCheat
+;	 lea _CheatFlag(pc),a0					 ;Set flag to say user is a cheat
+;	 move.b	 #-1,(a0)
+;	 bsr _FlushLibs
 
 _Nof3		cmp.b	#$53,d0 				;Check F4 key (Bounce from enemy)
 	bne _Nof4
 	add.l 	#$1c000,a1
 	eori.b	#1,$61b(a1)						;Bounce (move.w #1,(3a,a0) --> move.w #0,(3a,a0) )
 	sub.l	#$1c000,a1
-	bsr	_SetCheat
+	lea	_CheatFlag(pc),a0					;Set flag to say user is a cheat
+	move.b	#-1,(a0)
+	bsr	_FlushLibs
+;	 lea _CheatFlag(pc),a0					 ;Set flag to say user is a cheat
+;	 move.b	 #-1,(a0)
+;	 bsr _FlushLibs
 
 _Nof4		cmp.b	#$54,d0					;Check F5 key (Collision)
 	bne	_Nof5
@@ -520,8 +495,16 @@ _Nof4		cmp.b	#$54,d0					;Check F5 key (Collision)
 	bsr	_SetCheat
 	bra	_Nof5
 	
+;	 lea _CheatFlag(pc),a0					 ;Set flag to say user is a cheat
+;	 move.b	 #-1,(a0)
+;	 bsr _FlushLibs
+
 _Invon	move.w	#$0000,$862(a1)				;Invisibility off
 	bsr	_SetCheat
+;	 lea _CheatFlag(pc),a0					 ;Set flag to say user is a cheat
+;	 move.b	 #-1,(a0)
+;	 bsr _FlushLibs
+
 
 _Nof5		cmp.b	#$03,d0					;Check 3 key
 	bne	_No3key
@@ -529,6 +512,9 @@ _Nof5		cmp.b	#$03,d0					;Check 3 key
 	beq	_No3key
 	addq.w	#1,$86e(a1)						;Decrease height by adding 1
 	bsr	_SetCheat
+;	 lea _CheatFlag(pc),a0					 ;Set flag to say user is a cheat
+;	 move.b	 #-1,(a0)
+;	 bsr _FlushLibs
 
 _No3key		cmp.b	#$04,d0					;Check 4 key
 	bne	_No4key
@@ -536,6 +522,9 @@ _No3key		cmp.b	#$04,d0					;Check 4 key
 	beq _No4key
 	subq.w	#1,$86e(a1)						;Increase height by subtracting 1
 	bsr	_SetCheat
+;	 lea _CheatFlag(pc),a0					 ;Set flag to say user is a cheat
+;	 move.b	 #-1,(a0)
+;	 bsr _FlushLibs
 
 _No4key		cmp.b	#$01,d0					;Check 1 key
 	bne	_No1key
@@ -543,6 +532,9 @@ _No4key		cmp.b	#$01,d0					;Check 1 key
 	beq	_No1key
 	subq.w	#1,$858(a1)						;Slow down by subtracting 1
 	bsr	_SetCheat
+;	 lea _CheatFlag(pc),a0					 ;Set flag to say user is a cheat
+;	 move.b	 #-1,(a0)
+;	 bsr _FlushLibs
 
 _No1key		cmp.b	#$02,d0					;Check 2 key
 	bne	_No2key
@@ -550,6 +542,9 @@ _No1key		cmp.b	#$02,d0					;Check 2 key
 	beq	_No2key
 	addq.w	#1,$858(a1)						;Speed up by adding 1
 	bsr	_SetCheat
+;	 lea _CheatFlag(pc),a0					 ;Set flag to say user is a cheat
+;	 move.b	 #-1,(a0)
+;	 bsr _FlushLibs
 
 _No2key		cmp.b	#$32,d0					;Check X key
 	bne	_SameKeyDown
@@ -569,6 +564,12 @@ _SetCheat	lea	_CheatFlag(pc),a0			;Set flag to say user is a cheat
 _SameKeyDown	movem.l	(sp)+,d0-d1/a0-a2
 		rts
 
+_Flashscreen
+		  move.w  #$fff,color+_custom
+		waitvb
+;		 btst	 #0,(_custom+vposr+1)
+;		 beq .1
+		rts
 ;======================================================================
 
 _FlushLibs	movem.l	d0-d1/a0-a2,-(sp)
