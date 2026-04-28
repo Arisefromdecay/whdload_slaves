@@ -2,7 +2,7 @@
 ; Author:       asman, JOTD
 ; Version       1.3
 ; History	    1.2 by asman and JOTD
-;				1.3 07.04.2026 Trainer added (and optional cracktro)
+;				1.3 07.04.2026 Trainer added
 ; Requires	-
 ; Copyright	Public Domain
 ; Language	68000 Assembler
@@ -166,7 +166,6 @@ slv_config	dc.b	"C1:X:Unlimited Lives:0;"
 			dc.b	"C2:X:Invulnerability:1;"
 			dc.b	"C3:X:Always max Bonus:0;"
 			dc.b	"C3:X:Start with 50 Lives:1;"
-			dc.b	"C5:B:Show cracktro;"
 			dc.b	0
 
     EVEN
@@ -184,29 +183,7 @@ _bootdos:
 		lea	_dosbase(pc),a0
 		move.l	d0,(a0)
 		move.l	d0,a6			;A6 = dosbase
-	;load cracktro
-		clr.l	-(a7)
-		clr.l	-(a7)
-		pea	WHDLTAG_CUSTOM5_GET
-		move.l	a7,a0
-		jsr	(resload_Control,a2)
-		tst.l	(4,a7)
-		beq	.noctro
-		lea cracktro(pc),a3
-		move.l  a3,d1
-		jsr _LVOLoadSeg(a6)
-		move.l  d0,d7
-		beq error
-
-	;run cracktro
-	    lsl.l   #2,d0
-	    move.l  d0,a3
-	    jsr 4(a3)
-	;remove cracktro
-		move.l	d7,d1
-		move.l	_dosbase(pc),a6
-		jsr	_LVOUnLoadSeg(a6)
-.noctro
+	
 	;load intro
 		lea	intro(pc),a3
 		move.l	a3,d1
@@ -544,4 +521,3 @@ file_hiscore	dc.b	"Ugh.highs",0
 	EVEN
 intro:		dc.b	'loader',0
 game:		dc.b	't',0
-cracktro	dc.b	"Decade",0
