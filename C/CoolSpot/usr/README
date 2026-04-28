@@ -13,8 +13,12 @@
 	full whdload package:	aminet:dev/misc/whdload#?.lha
 	other installs:		http://www.whdload.de/
 
-        v2.1 (17.04.2016) done by JOTD
-        - added quitkey for 68000 machines
+	v2.2 (24.04.2026) done by Arise from decay
+	- added trainer and ingame keys
+	- added skip intro option
+
+	v2.1 (17.04.2016) done by JOTD
+	- added quitkey for 68000 machines
 
 	v2.0 (12.04.2016) done by JOTD
 	- chipmem usage lowered to 0.5MB
